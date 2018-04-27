@@ -58,7 +58,7 @@ public class ContextualMenu: UIView {
     fileprivate let longPressGesture = UILongPressGestureRecognizer()
     fileprivate let forceTouchGesture = ForceTouchGestureRecognizer()
 
-    fileprivate var startingLocation: CGPoint = .zero
+    @objc public var startingLocation: CGPoint = .zero
     fileprivate var contextualMenuItems: [ContextualMenuItem] = []
     
     @objc public required init(menuType: MenuType = .fan, activate activateOption: ActivateOption = .onLongPress) {
