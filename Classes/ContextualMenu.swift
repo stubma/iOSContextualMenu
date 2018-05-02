@@ -59,6 +59,7 @@ public class ContextualMenu: UIView {
     fileprivate let forceTouchGesture = ForceTouchGestureRecognizer()
 
     @objc public var startingLocation: CGPoint = .zero
+	fileprivate var canDismiss: Bool = false
     fileprivate var contextualMenuItems: [ContextualMenuItem] = []
     
     @objc public required init(menuType: MenuType = .fan, activate activateOption: ActivateOption = .onLongPress) {
@@ -81,10 +82,11 @@ public class ContextualMenu: UIView {
         
         shadowView.addSubview(shadowDismissButton)
         shadowView.addSubview(startCircleView)
+		startCircleView.isHidden = true
         
         super.init(frame: .zero)
-        
-        shadowDismissButton.addTarget(self, action: #selector(dismissMenuItems), for: .touchUpInside)
+		
+		shadowDismissButton.addTarget(self, action: #selector(dismissMenuItems), for: .touchUpInside)
         tapGesture.addTarget(self, action: #selector(handleGesture(recognizer:)))
         longPressGesture.addTarget(self, action: #selector(handleGesture(recognizer:)))
         forceTouchGesture.addTarget(self, action: #selector(handleGesture(recognizer:)))
@@ -129,7 +131,6 @@ public class ContextualMenu: UIView {
             superview?.addGestureRecognizer($0.recognizer)
             $0.recognizer.isEnabled = $0.option == activateOption
         }
-        startCircleView.isHidden = activateOption != .onLongPress && activateOption != .onForceTouch
         superview?.isUserInteractionEnabled = superview?.isUserInteractionEnabled == true || activateOption != .asSoonAsPossible;
     }
 }
@@ -151,7 +152,7 @@ extension ContextualMenu {
         }
         contextualMenuItems.flatMap { [$0.mainItem, $0.titleView] }.forEach {
             $0.center = startingLocation
-            $0.alpha = 0.0
+            $0.alpha = 1
             shadowView.addSubview($0)
         }
     }
@@ -167,7 +168,11 @@ extension ContextualMenu {
             handleDrag(with: touchLocation)
         } else if recognizer.state == .ended || recognizer.state == .cancelled {
             guard let highlightedMenuItem = currentlyHighlightedItem else {
-                dismissMenuItems()
+				if(canDismiss) {
+                	dismissMenuItems()
+				} else {
+					canDismiss = true
+				}
                 return
             }
             didSelect(menuItemView: highlightedMenuItem.mainItem)
@@ -230,6 +235,7 @@ extension ContextualMenu {
     func presentMenuItems(at location: CGPoint) {
         startingLocation = location
         startCircleView.center = location
+		canDismiss = false
         reloadData()
         
         guard delegate?.contextualMenuShouldActivate?(self) != false && !contextualMenuItems.isEmpty && shadowView.alpha == 0.0 && window != nil else { return }
@@ -250,7 +256,7 @@ extension ContextualMenu {
                     let titleView = item.titleView
                     menuItem.alpha = 1.0
                     menuItem.center = self.centerForMenuItem(at: item.index, radius: self.totalCircleRadius)
-                    titleView.center = CGPoint(x: menuItem.center.x, y: menuItem.frame.minY + titleView.frame.height.half)
+                    titleView.center = CGPoint(x: menuItem.center.x, y: menuItem.frame.minY - titleView.frame.height.half - 3)
                 }
             }
             UIView.addKeyframe(withRelativeStartTime: 0.8, relativeDuration: 0.2) {
@@ -258,7 +264,7 @@ extension ContextualMenu {
                     let menuItem = item.mainItem
                     let titleView = item.titleView
                     menuItem.center = self.centerForMenuItem(at: item.index, radius: self.menuItemsCenterRadius)
-                    titleView.center = CGPoint(x: menuItem.center.x, y: menuItem.frame.minY + titleView.frame.height.half)
+                    titleView.center = CGPoint(x: menuItem.center.x, y: menuItem.frame.minY - titleView.frame.height.half - 3)
                 }
             }
         }, completion: nil)
@@ -282,7 +288,7 @@ extension ContextualMenu {
         shadowView.bringSubview(toFront: item.titleView)
 
         let menuItem = item.mainItem
-        let titleView = item.titleView
+//        let titleView = item.titleView
         let highlightedView = menuItem.highlightedView
         let alpha: CGFloat = menuItem.isHighlighted ? 1.0 : 0.0
         let titleLabelPadding = menuItem.isHighlighted ? self.titleLabelPadding : 0.0
@@ -292,17 +298,17 @@ extension ContextualMenu {
         highlightedView.alpha = menuItem.isHighlighted ? 0.0 : 1.0
 
         UIView.animateKeyframes(withDuration: 0.2, delay: 0.0, options: .beginFromCurrentState, animations: {
-            titleView.alpha = alpha
+//            titleView.alpha = alpha
             highlightedView.alpha = alpha
             menuItem.center = location
 
-            UIView.addKeyframe(withRelativeStartTime: 0.0, relativeDuration: 0.7) {
-                titleView.center = CGPoint(x: location.x, y: titleLabelCenterMultiplier * (titleView.frame.height.half + titleLabelPadding + titleLabelOvershoot) + menuItem.frame.minY)
-            }
-            UIView.addKeyframe(withRelativeStartTime: 0.7, relativeDuration: 0.3) {
-                titleView.center = CGPoint(x: location.x, y: titleLabelCenterMultiplier * (titleView.frame.height.half + titleLabelPadding) + menuItem.frame.minY)
-            }
-            
+//            UIView.addKeyframe(withRelativeStartTime: 0.0, relativeDuration: 0.7) {
+//                titleView.center = CGPoint(x: location.x, y: titleLabelCenterMultiplier * (titleView.frame.height.half + titleLabelPadding + titleLabelOvershoot) + menuItem.frame.minY)
+//            }
+//            UIView.addKeyframe(withRelativeStartTime: 0.7, relativeDuration: 0.3) {
+//                titleView.center = CGPoint(x: location.x, y: titleLabelCenterMultiplier * (titleView.frame.height.half + titleLabelPadding) + menuItem.frame.minY)
+//            }
+			
             // menuItem scaling keyframes
             guard menuItem.isHighlighted else { return }
             UIView.addKeyframe(withRelativeStartTime: 0.0, relativeDuration: 0.2) {
@@ -507,7 +513,7 @@ extension ContextualMenu {
         titleLabel.lineBreakMode = .byWordWrapping
         titleLabel.textAlignment = .center
         titleLabel.font = titleViewFont
-        titleLabel.alpha = 0.0
+        titleLabel.alpha = 1
         titleLabel.clipsToBounds = true
         titleLabel.sizeToFit()
 
