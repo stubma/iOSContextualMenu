@@ -103,17 +103,19 @@ public class ContextualMenu: UIView {
     
     public override func didMoveToWindow() {
         super.didMoveToWindow()
-        
-        var rootController = window?.rootViewController
-        while let presentedViewController = rootController?.presentedViewController {
-            rootController = presentedViewController
-        }
-        shadowView.frame = rootController?.view.bounds ?? .zero
-        rootController?.view.addSubview(shadowView)
-        
-        if let superview = superview, activateOption == .asSoonAsPossible {
-            presentMenuItems(at: superview.convert(CGPoint(x: superview.bounds.width.half, y: superview.bounds.height.half), to: nil))
-        }
+		
+		if(shadowView.superview == nil) {
+			var rootController = window?.rootViewController
+			while let presentedViewController = rootController?.presentedViewController {
+				rootController = presentedViewController
+			}
+			shadowView.frame = rootController?.view.bounds ?? .zero
+			rootController?.view.addSubview(shadowView)
+			
+			if let superview = superview, activateOption == .asSoonAsPossible {
+				presentMenuItems(at: superview.convert(CGPoint(x: superview.bounds.width.half, y: superview.bounds.height.half), to: nil))
+			}
+		}
     }
     
     public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
@@ -237,7 +239,7 @@ extension ContextualMenu {
         startCircleView.center = location
 		canDismiss = false
         reloadData()
-        
+		
         guard delegate?.contextualMenuShouldActivate?(self) != false && !contextualMenuItems.isEmpty && shadowView.alpha == 0.0 && window != nil else { return }
         
         delegate?.contextualMenuDidActivate?(self)
