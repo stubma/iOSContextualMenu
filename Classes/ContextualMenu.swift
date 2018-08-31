@@ -142,14 +142,14 @@ extension ContextualMenu {
     @objc public func reloadData() {
         contextualMenuItems.forEach(removeAssociatedViews)
         contextualMenuItems.removeAll()
-        
+		
         let menuItemCount = dataSource?.numberOfMenuItems(for: self)
         guard let delegate = self.delegate, let itemCount = menuItemCount else { return }
-        
+		
         contextualMenuItems = (0..<itemCount).map { index in
-            let menuItemView = delegate.contextualMenu(self, viewForMenuItemAt: index)
-            let highlightedView = delegate.contextualMenu?(self, viewForHighlightedMenuItemAt: index) ?? UIView(frame: menuItemView.bounds, backgroundColor: UIColor(white: 0.0, alpha: 0.7))
-            let titleView = delegate.contextualMenu?(self, titleViewForMenuItemAt: index) ?? defaultTitleViewForMenuItem(at: index)
+			let menuItemView = delegate.contextualMenu(self, viewForMenuItemAt: index)
+            let highlightedView = delegate.contextualMenu!(self, viewForHighlightedMenuItemAt: index) ?? UIView(frame: menuItemView.bounds, backgroundColor: UIColor(white: 0.0, alpha: 0.7))
+            let titleView = delegate.contextualMenu!(self, titleViewForMenuItemAt: index) ?? defaultTitleViewForMenuItem(at: index)
             return (ContextualMenuItemView(contentView: menuItemView, highlightedView: highlightedView, delegate: self), titleView, index)
         }
         contextualMenuItems.flatMap { [$0.mainItem, $0.titleView] }.forEach {
